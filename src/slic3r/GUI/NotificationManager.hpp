@@ -193,12 +193,14 @@ private:
 #if ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 		enum class EState
 		{
-			Unknown,
+			Unknown,		  // NOT initialized
 			Hidden,
-			FadingOutRender,  // Requesting Render
-			FadingOutStatic,
+			Shown,			  // Requesting Render at some time if duration != 0
+			FadingOut,        // Requesting Render at some time
 			ClosePending,     // Requesting Render
 			Finished,         // Requesting Render
+			Hovered,		  // Followed by Shown 
+			Paused
 		};
 #else
 		enum class RenderResult
@@ -219,12 +221,12 @@ private:
 		RenderResult           render(GLCanvas3D& canvas, const float& initial_y, bool move_from_overlay, float overlay_width);
 #endif // ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 		// close will dissapear notification on next render
-		void                   close() { m_close_pending = true; }
+		void                   close() { /*m_close_pending = true;*/m_state = EState::ClosePending; }
 		// data from newer notification of same type
 		void                   update(const NotificationData& n);
-		bool                   is_finished() const { return m_finished || m_close_pending; }
+		bool                   is_finished() const { m_state == EState::ClosePending || m_state == EState::Finished;/*return m_finished || m_close_pending;*/ }
 #if ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
-		bool                   is_hovered() const { return m_hovered; }
+		bool                   is_hovered() const { m_state == EState::Hovered;/*return m_hovered;*/ }
 #endif // ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 		// returns top after movement
 		float                  get_top() const { return m_top_y; }
@@ -234,14 +236,14 @@ private:
 		const NotificationData get_data() const { return m_data; }
 		const bool             is_gray() const { return m_is_gray; }
 		// Call equals one second down
-		void                   substract_remaining_time(int seconds) { m_remaining_time -= seconds; }
+//		void                   substract_remaining_time(int seconds) { m_remaining_time -= seconds; }
 		void                   set_gray(bool g) { m_is_gray = g; }
-		void                   set_paused(bool p) { m_paused = p; }
+//		void                   set_paused(bool p) { m_paused = p; }
 		bool                   compare_text(const std::string& text);
-        void                   hide(bool h) { m_hidden = h; }
+        void                   hide(bool h) { m_state = EState::Hidden; /*m_hidden = h;*/ }
 #if ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 		// sets m_next_render with time of next mandatory rendering
-		void                   update_state();
+		void                   update_state(bool paused);
 		int64_t 		       next_render() const { return m_next_render; }
 		/*
 		bool				   requires_render() const { return m_state == EState::FadingOutRender || m_state == EState::ClosePending || m_state == EState::Finished; }
@@ -289,7 +291,7 @@ private:
 #endif // ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 
 		int              m_id                   { 0 };
-		bool			 m_initialized          { false };
+//		bool			 m_initialized          { false }; //not unknown estate
 		// Main text
 		std::string      m_text1;
 		// Clickable text
@@ -297,12 +299,13 @@ private:
 		// Aditional text after hypertext - currently not used
 		std::string      m_text2;
 		// Countdown variables
-		long             m_remaining_time;
-		bool             m_counting_down;
-		long             m_last_remaining_time;
-		bool             m_paused               { false };
-		int              m_countdown_frame      { 0 };
-		bool             m_fading_out           { false };
+//		long             m_remaining_time;
+//		bool             m_counting_down;
+//		long             m_last_remaining_time;
+		// paused == hovered??
+//		bool             m_paused               { false };
+//		int              m_countdown_frame      { 0 };
+//		bool             m_fading_out           { false };
 #if ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 		int64_t		 	 m_fading_start         { 0LL };
 		// time of last done render when fading
@@ -317,13 +320,13 @@ private:
 #endif // ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 		float            m_current_fade_opacity { 1.0f };
 		// If hidden the notif is alive but not visible to user
-		bool             m_hidden               { false };
+//		bool             m_hidden               { false };
 		//  m_finished = true - does not render, marked to delete
-		bool             m_finished             { false }; 
+//		bool             m_finished             { false }; 
 		// Will go to m_finished next render
-		bool             m_close_pending        { false }; 
+//		bool             m_close_pending        { false }; 
 #if ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
-		bool             m_hovered              { false };
+//		bool             m_hovered              { false };
 #endif // ENABLE_NEW_NOTIFICATIONS_FADE_OUT 
 		// variables to count positions correctly
 		// all space without text
