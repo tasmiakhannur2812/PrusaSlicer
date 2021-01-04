@@ -154,10 +154,11 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	if (m_state == EState::FadingOut) {
 		m_last_render_fading = GLCanvas3D::timestamp_now();
 
-	Size cnv_size = canvas.get_canvas_size();
+	Size          cnv_size = canvas.get_canvas_size();
 	ImGuiWrapper& imgui = *wxGetApp().imgui();
-	ImVec2 mouse_pos = ImGui::GetMousePos();
-	float right_gap = SPACE_RIGHT_PANEL + (move_from_overlay ? overlay_width + m_line_height * 5 : 0);
+	ImVec2        mouse_pos = ImGui::GetMousePos();
+	float         right_gap = SPACE_RIGHT_PANEL + (move_from_overlay ? overlay_width + m_line_height * 5 : 0);
+	bool          fading_pop = false;
 
 	if (m_line_height != ImGui::CalcTextSize("A").y)
 		init();
@@ -178,15 +179,14 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 		ImGui::SetNextWindowFocus();
 		m_state = EState::Hovered;
 	}
-
+	/*
 	// color change based on fading out
-	bool fading_pop = false;
 	if (m_state == EState::FadingOut)
-		Notifications_Internal::push_style_color(ImGuiCol_WindowBg, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg), m_state == EState::FadingOut, m_current_fade_opacity);
-		Notifications_Internal::push_style_color(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_Text), m_state == EState::FadingOut, m_current_fade_opacity);
+		Notifications_Internal::push_style_color(ImGuiCol_WindowBg, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg), true, m_current_fade_opacity);
+		Notifications_Internal::push_style_color(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_Text), true, m_current_fade_opacity);
 		fading_pop = true;
 	}
-
+	*/
 	// background color
 	if (m_is_gray) {
 		ImVec4 backcolor(0.7f, 0.7f, 0.7f, 0.5f);
@@ -203,11 +203,12 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 		backcolor.y += 0.15f;
 		Notifications_Internal::push_style_color(ImGuiCol_WindowBg, backcolor, m_state == EState::FadingOut, m_current_fade_opacity);
 	}
-
-	// name of window - probably indentifies window and is shown so last_end add whitespaces according to id
+	
+	// name of window indentifies window - has to be unique string
 	if (m_id == 0)
 		m_id = m_id_provider.allocate_id();
 	std::string name = "!!Ntfctn" + std::to_string(m_id);
+	
 	if (imgui.begin(name, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar)) {
 		ImVec2 win_size = ImGui::GetWindowSize();
 
