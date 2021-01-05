@@ -216,7 +216,7 @@ private:
         void                   hide(bool h) { m_state = EState::Hidden; }
 		// sets m_next_render with time of next mandatory rendering
 		void                   update_state(bool paused);
-		int64_t 		       next_render() const { return m_next_render; }
+		int64_t 		       next_render() const { return is_finished() ? 0 : m_next_render; }
 		EState                 get_state()  const { return m_state; }
 		bool				   is_hovered() const { return m_state == EState::Hovered; } 
 	
@@ -247,24 +247,33 @@ private:
 		const NotificationData m_data;
 		// For reusing ImGUI windows.
 		NotificationIDProvider &m_id_provider;
+		int              m_id{ 0 };
+
+		// State for rendering
 		EState           m_state                { EState::Unknown };
-		int              m_id                   { 0 };
+
+		// Time values for rendering fade-out
+
+		int64_t		 	 m_fading_start{ 0LL };
+		// time of last done render when fading
+		int64_t		 	 m_last_render_fading{ 0LL };
+		// first appereance of notification or last hover;
+		int64_t		 	 m_notification_start;
+		// time to next must-do render
+		int64_t          m_next_render{ std::numeric_limits<int64_t>::max() };
+		float            m_current_fade_opacity{ 1.0f };
+
+		// Notification data
+
 		// Main text
 		std::string      m_text1;
 		// Clickable text
 		std::string      m_hypertext;
 		// Aditional text after hypertext - currently not used
 		std::string      m_text2;
-		int64_t		 	 m_fading_start         { 0LL };
-		// time of last done render when fading
-		int64_t		 	 m_last_render_fading   { 0LL };
-		// first appereance of notification or last hover;
-		int64_t		 	 m_notification_start;
-		// time to next must-do render
-		int64_t          m_next_render          { std::numeric_limits<int64_t>::max() };
 
-		float            m_current_fade_opacity { 1.0f };
-		// variables to count positions correctly
+		// inner variables toposition notification window, texts and buttons correctly
+
 		// all space without text
 		float            m_window_width_offset;
 		// Space on left side without text
@@ -274,9 +283,7 @@ private:
 		float            m_window_width         { 450.0f };
 		//Distance from bottom of notifications to top of this notification
 		float            m_top_y                { 0.0f };  
-		
-		// Height of text
-		// Used as basic scaling unit!
+		// Height of text - Used as basic scaling unit!
 		float            m_line_height;
 		std::vector<int> m_endlines;
 		// Gray are f.e. eorrors when its uknown if they are still valid
@@ -402,7 +409,7 @@ private:
 	//prepared (basic) notifications
 	const std::vector<NotificationData> basic_notifications = {
 		{NotificationType::Mouse3dDisconnected, NotificationLevel::RegularNotification, 10,  _u8L("3D Mouse disconnected.") },
-		{NotificationType::PresetUpdateAvailable, NotificationLevel::ImportantNotification, 20,  _u8L("Configuration update is available."),  _u8L("See more."), [](wxEvtHandler* evnthndlr){
+		{NotificationType::PresetUpdateAvailable, NotificationLevel::RegularNotification, 10,  _u8L("Configuration update is available."),  _u8L("See more."), [](wxEvtHandler* evnthndlr){
 			if (evnthndlr != nullptr) wxPostEvent(evnthndlr, PresetUpdateAvailableClickedEvent(EVT_PRESET_UPDATE_AVAILABLE_CLICKED)); return true; }},
 		{NotificationType::NewAppAvailable, NotificationLevel::ImportantNotification, 20,  _u8L("New version is available."),  _u8L("See Releases page."), [](wxEvtHandler* evnthndlr){ 
 				wxLaunchDefaultBrowser("https://github.com/prusa3d/PrusaSlicer/releases"); return true; }},

@@ -584,7 +584,7 @@ void NotificationManager::PopNotification::update_state(bool paused)
 		m_current_fade_opacity = 1.0f;
 		m_notification_start = now;
 	// Timers when not fading
-	}else if (m_data.duration != 0 && !paused) {
+	} else if (m_data.duration != 0 && !paused) {
 		int64_t up_time = now - m_notification_start;
 		if (m_state != EState::FadingOut && up_time >= m_data.duration * 1000) {
 			m_state					= EState::FadingOut;
@@ -1033,7 +1033,6 @@ bool NotificationManager::push_notification_data(std::unique_ptr<NotificationMan
 
 void NotificationManager::render_notifications(float overlay_width)
 {
-
 	sort_notifications();
 
 	GLCanvas3D& canvas = *wxGetApp().plater()->get_current_canvas3D();
@@ -1048,6 +1047,48 @@ void NotificationManager::render_notifications(float overlay_width)
 		
 	}
 	update_notifications();
+}
+
+void NotificationManager::update_notifications()
+{
+	/*
+	// no update if not top window
+	wxWindow* p = dynamic_cast<wxWindow*>(wxGetApp().plater());
+	while (p->GetParent() != nullptr)
+		p = p->GetParent();
+	wxTopLevelWindow* top_level_wnd = dynamic_cast<wxTopLevelWindow*>(p);
+	if (!top_level_wnd->IsActive())
+		return;
+	*/
+
+	// next_render() returns numeric_limits::max if no need for frame
+	const int64_t max = std::numeric_limits<int64_t>::max();
+	int64_t       next_render = max;
+	// During render, each notification detects if its currently hovered and changes its state to EState::Hovered
+	// If any notification is hovered, all resets its countdown 
+	bool          hover = false;
+	for (const std::unique_ptr<PopNotification>& notification : m_pop_notifications) {
+		if (notification->is_hovered()) {
+			hover = true;
+			break;
+		}
+	}
+
+	for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
+		std::unique_ptr<PopNotification>& notification = *it;
+		notification->update_state(hover);
+		next_render = std::min<int64_t>(next_render, notification->next_render());
+		if (notification->get_state() == PopNotification::EState::Finished)
+			it = m_pop_notifications.erase(it);
+		else 
+			++it;
+	}
+
+	// request next frame if needed
+	BOOST_LOG_TRIVIAL(error) << "nxtrndr " << next_render;
+	if (next_render < max)
+		wxGetApp().plater()->get_current_canvas3D()->schedule_extra_frame(int(next_render));
+
 }
 
 void NotificationManager::sort_notifications()
@@ -1100,49 +1141,7 @@ void NotificationManager::set_in_preview(bool preview)
     }
 }
 
-void NotificationManager::update_notifications()
-{
-	// no update if not top window
-	wxWindow* p = dynamic_cast<wxWindow*>(wxGetApp().plater());
-	while (p->GetParent() != nullptr)
-		p = p->GetParent();
-	wxTopLevelWindow* top_level_wnd = dynamic_cast<wxTopLevelWindow*>(p);
-	if (!top_level_wnd->IsActive())
-		return;
 
-	// During render, each notification detects if its currently hovered and changes its state to EState::Hovered
-	// If any notification is hovered, all resets its countdown 
-	bool hover = false;
-	for (const std::unique_ptr<PopNotification>& notification : m_pop_notifications) {
-		if (notification->is_hovered()) {
-			hover = true;
-			break;
-		}
-	}
-
-	for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
-		std::unique_ptr<PopNotification>& notification = *it;
-		if (notification->get_state() == PopNotification::EState::Finished)
-			it = m_pop_notifications.erase(it);
-		else {
-			notification->update_state(hover);
-			++it;
-		}
-	}
-	
-	//request frames
-	int64_t next_render = std::numeric_limits<int64_t>::max();
-	const int64_t max = std::numeric_limits<int64_t>::max();
-	for (const std::unique_ptr<PopNotification>& notification : m_pop_notifications) {
-		next_render = std::min<int64_t>(next_render, notification->next_render());
-	}
-
-	if (next_render == 0)
-		wxGetApp().plater()->get_current_canvas3D()->request_extra_frame();
-	else if (next_render < max)
-		wxGetApp().plater()->get_current_canvas3D()->request_extra_frame_delayed(int(next_render));
-
-}
 
 bool NotificationManager::has_slicing_error_notification()
 {
