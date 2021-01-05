@@ -2968,6 +2968,7 @@ void GLCanvas3D::on_timer(wxTimerEvent& evt)
 
 void GLCanvas3D::on_render_timer(wxTimerEvent& evt)
 {
+    /*
     // If slicer is not top window leave, render will come after its focused again
     wxWindow* p = dynamic_cast<wxWindow*>(wxGetApp().plater());
     while (p->GetParent() != nullptr)
@@ -2977,7 +2978,7 @@ void GLCanvas3D::on_render_timer(wxTimerEvent& evt)
         //schedule_extra_frame(1000);
         return;
     }
-
+    */
     m_dirty = true;
     wxWakeUpIdle();
 }

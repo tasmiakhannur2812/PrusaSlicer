@@ -1085,7 +1085,6 @@ void NotificationManager::update_notifications()
 	}
 
 	// request next frame if needed
-	BOOST_LOG_TRIVIAL(error) << "nxtrndr " << next_render;
 	if (next_render < max)
 		wxGetApp().plater()->get_current_canvas3D()->schedule_extra_frame(int(next_render));
 
