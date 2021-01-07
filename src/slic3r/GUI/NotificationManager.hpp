@@ -409,7 +409,7 @@ private:
 	//prepared (basic) notifications
 	const std::vector<NotificationData> basic_notifications = {
 		{NotificationType::Mouse3dDisconnected, NotificationLevel::RegularNotification, 10,  _u8L("3D Mouse disconnected.") },
-		{NotificationType::PresetUpdateAvailable, NotificationLevel::RegularNotification, 10,  _u8L("Configuration update is available."),  _u8L("See more."), [](wxEvtHandler* evnthndlr){
+		{NotificationType::PresetUpdateAvailable, NotificationLevel::ImportantNotification, 20,  _u8L("Configuration update is available."),  _u8L("See more."), [](wxEvtHandler* evnthndlr){
 			if (evnthndlr != nullptr) wxPostEvent(evnthndlr, PresetUpdateAvailableClickedEvent(EVT_PRESET_UPDATE_AVAILABLE_CLICKED)); return true; }},
 		{NotificationType::NewAppAvailable, NotificationLevel::ImportantNotification, 20,  _u8L("New version is available."),  _u8L("See Releases page."), [](wxEvtHandler* evnthndlr){ 
 				wxLaunchDefaultBrowser("https://github.com/prusa3d/PrusaSlicer/releases"); return true; }},
